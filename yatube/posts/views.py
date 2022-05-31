@@ -7,10 +7,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import Post, Group, User, Follow
 from .forms import PostForm, CommentForm
 from django.contrib.auth.models import User
-from django.views.decorators.cache import cache_page
 
 
-# @cache_page(20)
 def index(request):
     template = 'posts/index.html'
     posts = Post.objects.all()
