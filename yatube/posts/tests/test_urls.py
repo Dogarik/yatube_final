@@ -34,7 +34,6 @@ class PostsURLTests(TestCase):
             cls.group_url,
             cls.profile_url,
             cls.post_url,
-            # cls.follow_urls,
         ]
         cls.urls_list_authorized_client = [
             cls.create_urls,
@@ -85,5 +84,4 @@ class PostsURLTests(TestCase):
         for template, address in templates_url_names.items():
             with self.subTest(address=address):
                 response = self.authorized_client.get(address)
-                # self.assertEqual(response.status_code, 200)
                 self.assertTemplateUsed(response, template)

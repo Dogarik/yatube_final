@@ -188,24 +188,25 @@ class PostsFollowTests(TestCase):
         )
 
     def test_follow_users_for_authorized_client(self):
-        follow_counter = Follow.objects.count()
+        url_login = reverse('users:login')
+        url_follow = reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.author.username}
+        )
         self.assertRedirects(
             self.guest.get(reverse(
                 'posts:profile_follow',
                 kwargs={'username': self.author.username})
             ),
-            '/auth/login/?next=/profile/author_1/follow/'
+            f"{url_login}?next={url_follow}"
         )
         self.authorized_client.get(reverse(
             'posts:profile_follow',
             kwargs={'username': self.author.username})
         )
-        self.assertTrue(
-            Follow.objects.filter(
-                user=self.user,
-                author=self.author,
-            ).exists()
-        )
+
+    def test_unfollow_users_for_authorized_client(self):
+        follow_counter = Follow.objects.count()
         self.authorized_client.get(reverse(
             'posts:profile_unfollow',
             kwargs={'username': self.author.username})

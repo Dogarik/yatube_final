@@ -16,6 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.conf.urls import include
+from django import views
 
 urlpatterns = [
     path('', include('posts.urls', namespace='yatube')),
@@ -25,6 +26,7 @@ urlpatterns = [
     path('auth/', include('django.contrib.auth.urls')),
 ]
 
-handler403 = 'core.views.csrf_failure'
+handler403csrf = 'core.views.csrf_failure'
+handler403 = 'core.views.permission_denied'
 handler404 = 'core.views.page_not_found'
-handler500 = 'core.views.as_error_view'
+handler500 = 'core.views.server_error'
