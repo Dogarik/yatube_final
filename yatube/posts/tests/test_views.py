@@ -188,7 +188,6 @@ class PostsFollowTests(TestCase):
         )
 
     def test_follow_users_for_authorized_client(self):
-        follow_counter = Follow.objects.count()
         url_login = reverse('users:login')
         url_follow = reverse(
             'posts:profile_follow',
@@ -205,7 +204,6 @@ class PostsFollowTests(TestCase):
             'posts:profile_follow',
             kwargs={'username': self.author.username})
         )
-        self.assertEqual(Follow.objects.count(), follow_counter)
 
     def test_unfollow_users_for_authorized_client(self):
         self.authorized_client.get(reverse(
