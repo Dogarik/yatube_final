@@ -206,10 +206,12 @@ class PostsFollowTests(TestCase):
         )
 
     def test_unfollow_users_for_authorized_client(self):
+        follow_counter = Follow.objects.count()
         self.authorized_client.get(reverse(
             'posts:profile_unfollow',
             kwargs={'username': self.author.username})
         )
+        self.assertEqual(Follow.objects.count(), follow_counter)
 
     def test_user_follow_posts_exists_at_desire_location(self):
         self.authorized_client.get(reverse(
