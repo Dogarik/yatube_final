@@ -4,6 +4,7 @@ import tempfile
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.paginator import Page
 from django.test import Client, TestCase, override_settings
@@ -166,12 +167,28 @@ class PostPagesTests(TestCase):
                 form_field = response.context.get('form').fields.get(value)
                 self.assertIsInstance(form_field, expected)
 
+    def test_comment(self):
+        comment_counter = self.post.comments.count()
+        form_data = {'text': 'Тестовый комментарий'}
+        response = self.authorized_client.post(
+            reverse(
+                'posts:add_comment',
+                kwargs={'post_id': self.post.id}
+            ),
+            data=form_data,
+            follow=True
+        )
+        self.assertEqual(self.post.comments.count(), comment_counter + 1)
+        comment_text = response.context['comments'][0].text
+        self.assertEqual(comment_text, form_data['text'])
+
 
 class PostsFollowTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='user_1')
+        cls.user_2 = User.objects.create_user(username='User_2')
         cls.author = User.objects.create_user(username='author_1')
         cls.guest = Client()
         cls.authorized_client = Client()
@@ -198,20 +215,29 @@ class PostsFollowTests(TestCase):
                 'posts:profile_follow',
                 kwargs={'username': self.author.username})
             ),
-            f"{url_login}?next={url_follow}"
+            f'{url_login}?next={url_follow}'
         )
+
+    def test_user_tracking_for_authorized_client(self):
         self.authorized_client.get(reverse(
             'posts:profile_follow',
             kwargs={'username': self.author.username})
         )
 
     def test_unfollow_users_for_authorized_client(self):
-        follow_counter = Follow.objects.count()
-        self.authorized_client.get(reverse(
+        follow_page = reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.user_2.username})
+        self.authorized_client.get(follow_page)
+        follow = Follow.objects.filter(user=self.user)
+        follow_count_1 = len(follow)
+        follow_page = reverse(
             'posts:profile_unfollow',
-            kwargs={'username': self.author.username})
-        )
-        self.assertEqual(Follow.objects.count(), follow_counter)
+            kwargs={'username': self.user_2.username})
+        self.authorized_client.get(follow_page)
+        follow = Follow.objects.filter(user=self.user)
+        follow_count_2 = len(follow)
+        self.assertEqual(follow_count_2, follow_count_1 - 1)
 
     def test_user_follow_posts_exists_at_desire_location(self):
         self.authorized_client.get(reverse(
@@ -225,3 +251,23 @@ class PostsFollowTests(TestCase):
         response = self.authorized_client.get(reverse('posts:follow_index'))
         content = response.context['page_obj'][0]
         self.assertEqual(content.text, post.text)
+
+    def test_cache_in_index_page_show_correct_context(self):
+        Post.objects.filter(id=14).delete()
+        Post.objects.filter(id=13).delete()
+        Post.objects.filter(id=12).delete()
+        Post.objects.filter(id=11).delete()
+        Post.objects.filter(id=10).delete()
+        Post.objects.filter(id=9).delete()
+        Post.objects.create(
+            text='Текст',
+            author=self.user,
+        )
+        leng = Post.objects.count()
+        resp = self.authorized_client.get(reverse('posts:index'))
+        self.assertEqual(len(resp.context.get('page_obj')), leng)
+        Post.objects.last().delete()
+        self.assertEqual(len(resp.context.get('page_obj')), leng)
+        cache.clear()
+        resp = self.authorized_client.get(reverse('posts:index'))
+        self.assertEqual(len(resp.context.get('page_obj')), leng - 1)
