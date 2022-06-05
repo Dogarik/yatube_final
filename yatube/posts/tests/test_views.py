@@ -253,12 +253,6 @@ class PostsFollowTests(TestCase):
         self.assertEqual(content.text, post.text)
 
     def test_cache_in_index_page_show_correct_context(self):
-        Post.objects.filter(id=14).delete()
-        Post.objects.filter(id=13).delete()
-        Post.objects.filter(id=12).delete()
-        Post.objects.filter(id=11).delete()
-        Post.objects.filter(id=10).delete()
-        Post.objects.filter(id=9).delete()
         Post.objects.create(
             text='Текст',
             author=self.user,
