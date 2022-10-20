@@ -26,10 +26,6 @@ python manage.py migrate
 ```
 python manage.py createsuperuser
 ```
-Соберите статику:
-```
-python manage.py collectstatic
-```
 Запуск проекта:
 ```
 python manage.py runserver
